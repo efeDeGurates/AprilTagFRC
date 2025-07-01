@@ -3,6 +3,12 @@ import numpy as np
 from pyapriltags import Detector
 import time
 import serial
+from networktables import NetworkTables
+import socket
+
+HOST = "192.168.x.x"
+NetworkTables.initialize(server=HOST)
+table = NetworkTables.getTable("apriltags")
 
 #ser = serial.Serial('COMx', 115200, timeout=1)
 
@@ -29,7 +35,13 @@ while True:
 
         print(f"Tag ID: {tag.tag_id} - X: {center_x}, Y: {center_y}")
 
-        message = f"ID:{tag.tag_id}, X:{center_x}, Y:{center_y}\n"
+        tag_table = table.getSubTable(f"tag_{tag.tag_id}")
+        tag_table.putNumber("center_x", center_x)
+        tag_table.putNumber("center_y", center_y)
+        tag_table.putNumberArray("corners", np.array(tag.corners).flatten().tolist())
+        tag_table.putNumber("last_update", time.time())
+
+        #message = f"ID:{tag.tag_id}, X:{center_x}, Y:{center_y}\n"
         #ser.write(message.encode())
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
